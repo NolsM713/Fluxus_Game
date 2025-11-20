@@ -1,0 +1,179 @@
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>💩 Fluxus Run</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: white; overflow: hidden; font-family: sans-serif; }
+    canvas { display: block; background: #222; margin: auto; }
+    #score {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #jumpBtn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      padding: 20px 30px;
+      font-size: 20px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Score:0</div>
+  <canvas id="game" width="800" height="400"></canvas>
+  <button id="jumpBtn" onclick="jump()">⬆️ Jump</button>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const player = {
+      x: 50,
+      y: 300,
+      w: 40,
+      h: 40,
+      vy: 0,
+      jumpForce: -10,
+      gravity: 0.5,
+      grounded: false
+    };
+let obstacles = [];
+    let spikes = [];
+    let score = 0;
+    let gameOver = false;
+
+    function drawPlayer() {
+      ctx.font = "30px serif";
+      ctx.fillText("💩", player.x, player.y + player.h);
+    }
+
+    function drawObstacle(o) {
+      ctx.fillStyle = "red";
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+    }
+
+    function drawSpike(s) {
+      ctx.fillStyle = "orange";
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y + s.h);
+      ctx.lineTo(s.x + s.w / 2, s.y);
+      ctx.lineTo(s.x + s.w, s.y + s.h);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function spawnObstacle() {
+      obstacles.push({
+        x: canvas.width + Math.random() * 400,
+        y: 320,
+        w: 30,
+        h: 60
+      });
+    }
+
+    function spawnSpike() {
+      spikes.push({
+        x: canvas.width + Math.random() * 300,
+        y: 360,
+        w: 20,
+        h: 20
+      });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Gravity
+      player.vy += player.gravity;
+      player.y += player.vy;
+
+      // Ground
+      if (player.y + player.h >= 360) {
+        player.y = 360 - player.h;
+        player.vy = 0;
+        player.grounded = true;
+      } else {
+        player.grounded = false;
+      }
+
+      // Draw player
+drawPlayer();
+
+      // Update & draw obstacles
+      obstacles.forEach((o, i) => {
+        o.x -= 5;
+        drawObstacle(o);
+        if (
+          player.x < o.x + o.w &&
+          player.x + player.w > o.x &&
+          player.y < o.y + o.h &&
+          player.y + player.h > o.y
+        ) {
+          endGame();
+        }
+        if (o.x + o.w < 0) obstacles.splice(i, 1);
+      });
+
+      // Update & draw spikes
+      spikes.forEach((s, i) => {
+        s.x -= 5;
+        drawSpike(s);
+        if (
+          player.x < s.x + s.w &&
+          player.x + player.w > s.x &&
+          player.y < s.y + s.h &&
+          player.y + player.h > s.y
+        ) {
+          endGame();
+        }
+        if (s.x + s.w < 0) spikes.splice(i, 1);
+      });
+
+      // Ground line
+      ctx.fillStyle = "#444";
+      ctx.fillRect(0, 360, canvas.width, 2);
+
+      // Score
+      score += 1;
+      document.getElementById("score").textContent = "Score: " + score;
+
+      requestAnimationFrame(update);
+    }
+
+    function endGame() {
+      gameOver = true;
+      ctx.fillStyle = "white";
+      ctx.font = "40px sans-serif";
+      ctx.fillText("Game Over", canvas.width / 2 - 100, canvas.height / 2);
+    }
+
+    function jump() {
+      if (player.grounded) {
+        player.vy = player.jumpForce;
+      }
+}
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") jump();
+    });
+
+    setInterval(spawnObstacle, 2000);
+    setInterval(spawnSpike, 1500);
+
+    update();
+  </script>
+</body>
+</html>
+```
